@@ -37,7 +37,7 @@ async function loadRemoteLawQuestions(lawSlug) {
   if (!client) return null;
   const { data, error } = await client.rpc('get_public_quiz_questions_by_law', {
     p_law_slug: lawSlug,
-    p_count: 50,
+    p_count: 200,
   });
   if (error) throw error;
   return (data || []).map(mapRemoteQuestion);
