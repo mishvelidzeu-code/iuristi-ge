@@ -33,7 +33,7 @@ Frontend `profiles.role`-ს ამოწმებს, ხოლო მონა
 
 კანონები ინახება `laws`, მუხლები `law_articles`, ხოლო კითხვასთან რამდენიმე მუხლის კავშირი `question_law_articles` ცხრილში. `laws.html` იძლევა კონკრეტული სამართლებრივი აქტის არჩევისა და მხოლოდ მასზე დაფუძნებული ტესტის დაწყების საშუალებას.
 
-CSV სვეტები: `category_slug,subcategory_slug,text,difficulty,explanation,law_name,law_article,source_url,law_version_date,is_prime,option_a,option_b,option_c,option_d,correct_option`. საქართველოს კონსტიტუციის სრული CSV არის `data/constitution_questions_full.csv`, ხოლო „ნორმატიული აქტების შესახებ“ კანონის CSV არის `data/normative_acts_questions.csv`. Supabase-ში ასატვირთი იდემპოტენტური SQL ფაილები ინახება `supabase/import_*_questions*.sql` ფორმატით. Production-ზე კითხვა ქვეყნდება მხოლოდ `verified_at`-ის შევსებისა და `needs_review=false` მდგომარეობისას. JSON ექსპორტისთვის გამოიყენეთ Dashboard Table Editor ან `pg_dump --data-only`.
+CSV სვეტები: `category_slug,subcategory_slug,text,difficulty,explanation,law_name,law_article,source_url,law_version_date,is_prime,option_a,option_b,option_c,option_d,correct_option`. საქართველოს კონსტიტუციის სრული CSV არის `data/constitution_questions_full.csv`, „ნორმატიული აქტების შესახებ“ კანონის CSV არის `data/normative_acts_questions.csv`, ხოლო „საქართველოს საკონსტიტუციო სასამართლოს შესახებ“ კანონის CSV არის `data/constitutional_court_questions.csv`. Supabase-ში ასატვირთი იდემპოტენტური SQL ფაილები ინახება `supabase/import_*_questions*.sql` ფორმატით. Production-ზე კითხვა ქვეყნდება მხოლოდ `verified_at`-ის შევსებისა და `needs_review=false` მდგომარეობისას. JSON ექსპორტისთვის გამოიყენეთ Dashboard Table Editor ან `pg_dump --data-only`.
 
 ## PRIME, გადახდა და სერტიფიკატი
 

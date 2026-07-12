@@ -21,6 +21,8 @@
 - დაემატა სრული კონსტიტუციის იდემპოტენტური Supabase იმპორტი (`supabase/import_constitution_questions_full.sql`);
 - მომზადდა და Supabase-ში აიტვირთა საქართველოს ორგანული კანონის „ნორმატიული აქტების შესახებ“ 58 კითხვა (`data/normative_acts_questions.csv`);
 - დაემატა „ნორმატიული აქტების შესახებ“ კანონის იდემპოტენტური Supabase იმპორტი (`supabase/import_normative_acts_questions.sql`);
+- მომზადდა და Supabase-ში აიტვირთა საქართველოს ორგანული კანონის „საქართველოს საკონსტიტუციო სასამართლოს შესახებ“ 99 კითხვა (`data/constitutional_court_questions.csv`);
+- დაემატა „საქართველოს საკონსტიტუციო სასამართლოს შესახებ“ კანონის იდემპოტენტური Supabase იმპორტი (`supabase/import_constitutional_court_questions.sql`);
 - შეიქმნა `PROJECT_OVERVIEW.md` და მუდმივი ცვლილებების ჟურნალი.
 
 ### გამოსწორდა
