@@ -101,9 +101,11 @@ function render() {
   const feedback = $('#feedback');
   if (selected === undefined) {
     feedback.hidden = true;
+    feedback.className = 'notice';
     feedback.textContent = '';
   } else {
     feedback.hidden = false;
+    feedback.className = selected === question.answer ? 'notice correct-feedback' : 'notice';
     feedback.textContent = question.explanation;
   }
 
