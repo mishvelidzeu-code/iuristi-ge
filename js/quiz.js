@@ -122,12 +122,21 @@ function render() {
       state.answers[q.id] = i;
       save();
       render();
-      if (state.mode === 'learning') {
-        window.App.toast(i === q.answer ? '✓ სწორი პასუხია' : `✕ არასწორია. ${q.explanation}`);
-      }
     };
     box.append(b);
   });
+
+  const selected = state.answers[q.id];
+  const feedback = $('#feedback');
+  if (selected === undefined) {
+    feedback.hidden = true;
+    feedback.className = 'notice';
+    feedback.textContent = '';
+  } else {
+    feedback.hidden = false;
+    feedback.className = selected === q.answer ? 'notice correct-feedback' : 'notice';
+    feedback.textContent = q.explanation;
+  }
 
   $('#prev').disabled = state.index === 0;
   $('#next').textContent = state.index === pool.length - 1 ? 'ტესტის დასრულება' : 'შემდეგი კითხვა';
