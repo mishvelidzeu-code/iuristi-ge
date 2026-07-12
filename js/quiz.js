@@ -15,6 +15,15 @@ function remaining() {
   return Math.max(0, state.duration - Math.floor((Date.now() - state.startedAt) / 1000));
 }
 
+function shuffle(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 function mapRemoteQuestion(row) {
   return {
     id: row.id,
@@ -72,24 +81,21 @@ async function setup() {
     return;
   }
 
-  const old = JSON.parse(localStorage.getItem(key) || 'null');
-  if (old && !old.completed && confirm('დაუმთავრებელი ტესტი არსებობს. გსურთ გაგრძელება?')) {
-    state = old;
-  } else {
-    state = {
-      id: crypto.randomUUID(),
-      attemptId: crypto.randomUUID(),
-      questionIds: pool.map((q) => q.id),
-      index: 0,
-      answers: {},
-      startedAt: Date.now(),
-      duration: 600,
-      mode: params.get('mode') || 'learning',
-      lawSlug: law,
-      completed: false,
-    };
-    save();
-  }
+  pool = shuffle(pool);
+  localStorage.removeItem(key);
+  state = {
+    id: crypto.randomUUID(),
+    attemptId: crypto.randomUUID(),
+    questionIds: pool.map((q) => q.id),
+    index: 0,
+    answers: {},
+    startedAt: Date.now(),
+    duration: 600,
+    mode: params.get('mode') || 'learning',
+    lawSlug: law,
+    completed: false,
+  };
+  save();
 
   pool = state.questionIds.map((id) => pool.find((q) => q.id === id)).filter(Boolean);
   render();
