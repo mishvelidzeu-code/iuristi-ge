@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /auth.html
+Disallow: /profile.html
+Disallow: /admin.html
+Sitemap: https://iuristi.ge/sitemap.xml

@@ -1,0 +1,6 @@
+supabase/.temp/
+.agents/
+.codex/
+node_modules/
+.env
+*.log
