@@ -86,6 +86,8 @@ function render() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'option';
+    if (selected !== undefined && optionIndex === question.answer) button.classList.add('correct');
+    if (selected === optionIndex && selected !== question.answer) button.classList.add('incorrect');
     if (selected === optionIndex) button.classList.add('selected');
     button.textContent = `${optionLetters[optionIndex]}. ${text}`;
     button.disabled = selected !== undefined;
