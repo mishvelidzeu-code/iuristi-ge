@@ -56,6 +56,10 @@ async function setup() {
   const params = new URLSearchParams(location.search);
   const cat = params.get('category');
   const law = params.get('law');
+  if (cat && !law) {
+    location.href = 'tests.html';
+    return;
+  }
   const names = {
     'constitution-of-georgia': 'საქართველოს კონსტიტუცია',
     'criminal-code': 'საქართველოს სისხლის სამართლის კოდექსი',

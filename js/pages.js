@@ -31,7 +31,7 @@ function lawTestCard(law) {
   return `<article class="card"><div class="eyebrow">${esc(directionNames[direction] || 'სამართლის')} ტესტი</div><h3>${esc(title)}</h3><p class="meta">${esc(desc)}</p><div class="card-footer"><span>${count} კითხვა</span><a class="btn" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=learning">დაწყება</a></div></article>`;
 }
 
-if ($('#categories .grid')) $('#categories .grid').innerHTML = categories.map(card).join('');
+if ($('#categories')) $('#categories').remove();
 
 if ($('#test-list')) {
   let lawTests = fallbackLaws.filter((law) => (law.count ?? 0) > 0);
@@ -65,9 +65,9 @@ if ($('#test-list')) {
       })
       .map((item) => ({ type: 'law', item }));
 
-    const data = [...lawCards, ...categoryCards];
+    const data = lawCards;
     $('#test-list').innerHTML = data.length
-      ? data.map((entry) => (entry.type === 'law' ? lawTestCard(entry.item) : card(entry.item))).join('')
+      ? data.map((entry) => lawTestCard(entry.item)).join('')
       : '<p class="card">ტესტი ვერ მოიძებნა.</p>';
   };
 
