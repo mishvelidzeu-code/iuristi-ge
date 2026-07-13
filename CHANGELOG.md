@@ -6,6 +6,7 @@
 
 ### დამატებულია
 
+- მომზადდა და Supabase-ში აიტვირთა 200 სიტყვასიტყვითი და კაზუსური კითხვა საქართველოს ორგანული კანონის „საერთო სასამართლოების შესახებ“ მიხედვით (`data/common_courts_questions.csv`, `supabase/import_common_courts_questions.sql`);
 - მომზადდა და Supabase-ში აიტვირთა 156 სიტყვასიტყვითი და კაზუსური კითხვა საქართველოს კანონის „ადვოკატთა შესახებ“ მიხედვით (`data/advocates_questions.csv`, `supabase/import_advocates_questions.sql`);
 - მომზადდა 92 სიტყვასიტყვითი და კაზუსური კითხვა საქართველოს კანონის „სიტყვისა და გამოხატვის თავისუფლების შესახებ“ მიხედვით (`data/freedom_of_expression_questions.csv`);
 - დაემატა ამავე კანონის იდემპოტენტური Supabase import ფაილი (`supabase/import_freedom_of_expression_questions.sql`);
