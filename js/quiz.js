@@ -3,6 +3,9 @@ import { questions } from './data.js';
 const $ = (selector) => document.querySelector(selector);
 const key = 'iuristi_active_attempt';
 const optionLetters = ['A', 'B', 'C', 'D'];
+const questionLimit = 30;
+const testDurationSeconds = 30 * 60;
+const remotePoolLimit = 1000;
 let pool = [];
 let state = null;
 let timer = null;
@@ -46,7 +49,7 @@ async function loadRemoteLawQuestions(lawSlug) {
   if (!client) return null;
   const { data, error } = await client.rpc('get_public_quiz_questions_by_law', {
     p_law_slug: lawSlug,
-    p_count: 200,
+    p_count: remotePoolLimit,
   });
   if (error) throw error;
   return (data || []).map(mapRemoteQuestion);
@@ -85,7 +88,7 @@ async function setup() {
     return;
   }
 
-  pool = shuffle(pool);
+  pool = shuffle(pool).slice(0, questionLimit);
   localStorage.removeItem(key);
   state = {
     id: crypto.randomUUID(),
@@ -94,7 +97,7 @@ async function setup() {
     index: 0,
     answers: {},
     startedAt: Date.now(),
-    duration: 600,
+    duration: testDurationSeconds,
     mode: params.get('mode') || 'learning',
     lawSlug: law,
     completed: false,
