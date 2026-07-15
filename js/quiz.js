@@ -4,6 +4,7 @@ const $ = (selector) => document.querySelector(selector);
 const key = 'iuristi_active_attempt';
 const optionLetters = ['A', 'B', 'C', 'D'];
 const questionLimit = 30;
+const customExamQuestionLimit = 100;
 const testDurationSeconds = 30 * 60;
 const remotePoolLimit = 1000;
 let pool = [];
@@ -102,10 +103,57 @@ async function loadRemoteLawQuestions(lawSlug) {
   return (data || []).map(mapRemoteQuestion);
 }
 
+async function loadLawCatalog() {
+  if (!window.App?.getClient) return [];
+  const client = await window.App.getClient();
+  if (!client) return [];
+  const { data, error } = await client.rpc('get_law_catalog', { p_direction: null });
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadCustomExamQuestions() {
+  const raw = localStorage.getItem('iuristi_custom_exam');
+  if (!raw) return [];
+  const config = JSON.parse(raw);
+  const target = Number(config.total || customExamQuestionLimit);
+  const chosen = [];
+  const usedIds = new Set();
+  const selections = Array.isArray(config.selections) ? config.selections : [];
+
+  for (const selection of selections) {
+    const lawQuestions = shuffle(await loadRemoteLawQuestions(selection.slug) || []);
+    const wanted = Math.max(0, Number(selection.count || 0));
+    const picked = lawQuestions.filter((question) => !usedIds.has(question.id)).slice(0, wanted);
+    picked.forEach((question) => usedIds.add(question.id));
+    chosen.push(...picked);
+  }
+
+  if (chosen.length < target) {
+    const catalog = await loadLawCatalog();
+    const selectedSlugs = new Set(selections.map((selection) => selection.slug));
+    const fillLaws = shuffle(catalog.filter((law) => (law.question_count ?? law.count ?? 0) > 0));
+    for (const law of fillLaws) {
+      if (chosen.length >= target) break;
+      const lawQuestions = shuffle(await loadRemoteLawQuestions(law.slug) || []);
+      for (const question of lawQuestions) {
+        if (chosen.length >= target) break;
+        if (usedIds.has(question.id)) continue;
+        if (selectedSlugs.has(law.slug) && selections.some((selection) => selection.slug === law.slug && Number(selection.count || 0) <= 0)) continue;
+        usedIds.add(question.id);
+        chosen.push(question);
+      }
+    }
+  }
+
+  return shuffle(chosen).slice(0, target);
+}
+
 async function setup() {
   const params = new URLSearchParams(location.search);
   const cat = params.get('category');
   const law = params.get('law');
+  const isCustomExam = params.get('custom') === '1';
   if (cat && !law) {
     location.href = 'tests.html';
     return;
@@ -119,13 +167,13 @@ async function setup() {
   };
 
   try {
-    pool = (await loadRemoteLawQuestions(law)) || [];
+    pool = isCustomExam ? await loadCustomExamQuestions() : ((await loadRemoteLawQuestions(law)) || []);
   } catch (error) {
     window.App.toast(`Supabase-დან კითხვები ვერ ჩაიტვირთა: ${window.App.friendlyError?.(error) || error.message}`);
     pool = [];
   }
 
-  if (!pool.length) {
+  if (!pool.length && !isCustomExam) {
     pool = questions.filter((q) => (!cat || q.category === cat) && (!law || names[law] === q.law));
   }
 
@@ -135,7 +183,7 @@ async function setup() {
     return;
   }
 
-  pool = shuffle(pool).slice(0, questionLimit);
+  pool = isCustomExam ? shuffle(pool).slice(0, customExamQuestionLimit) : shuffle(pool).slice(0, questionLimit);
   localStorage.removeItem(key);
   state = {
     id: crypto.randomUUID(),
@@ -146,8 +194,9 @@ async function setup() {
     marks: {},
     startedAt: Date.now(),
     duration: testDurationSeconds,
-    mode: params.get('mode') || 'learning',
+    mode: isCustomExam ? 'exam' : (params.get('mode') || 'learning'),
     lawSlug: law,
+    customExam: isCustomExam,
     completed: false,
   };
   save();

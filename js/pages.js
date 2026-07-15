@@ -35,8 +35,10 @@ if ($('#categories')) $('#categories').remove();
 
 if ($('#test-list')) {
   let lawTests = fallbackLaws.filter((law) => (law.count ?? 0) > 0);
+  let customSelections = {};
 
   const normalize = (value) => String(value || '').toLowerCase();
+  const availableCount = (law) => Number(law.question_count ?? law.count ?? 0);
   const render = () => {
     const q = normalize($('#search').value);
     const cat = $('#category').value;
@@ -88,7 +90,113 @@ if ($('#test-list')) {
     render();
   }
 
+  function selectedTotal() {
+    return Object.values(customSelections).reduce((sum, count) => sum + Number(count || 0), 0);
+  }
+
+  function renderCustomBuilder() {
+    const modal = $('#custom-test-modal');
+    if (!modal) return;
+    const list = $('#custom-law-list');
+    const selected = $('#custom-selected-list');
+    const total = selectedTotal();
+    const searchable = normalize($('#custom-law-search')?.value || '');
+    const rows = lawTests
+      .filter((law) => availableCount(law) > 0)
+      .filter((law) => !searchable || normalize(`${law.title} ${law.short_title || law.short || ''}`).includes(searchable));
+
+    $('#custom-total').textContent = `${total} / 100`;
+    $('#custom-auto-fill').textContent = total < 100
+      ? `დარჩენილი ${100 - total} კითხვა ავტომატურად შეივსება სხვა კანონებიდან.`
+      : total === 100 ? 'ტესტი სრულად არის შევსებული.' : 'რაოდენობა 100-ზე მეტია — შეამცირე.';
+    $('#custom-start').disabled = total <= 0 || total > 100;
+
+    list.innerHTML = rows.map((law) => {
+      const slug = law.slug;
+      const count = availableCount(law);
+      const current = customSelections[slug] || '';
+      return `<div class="custom-law-row"><div><b>${esc(law.short_title || law.short || law.title)}</b><span>${count} კითხვა</span></div><div class="custom-law-actions"><input type="number" min="1" max="${Math.min(100, count)}" value="${current}" data-custom-count="${esc(slug)}" placeholder="რაოდ."><button class="btn secondary" type="button" data-custom-add="${esc(slug)}">+</button></div></div>`;
+    }).join('');
+
+    const selectedRows = Object.entries(customSelections)
+      .map(([slug, count]) => {
+        const law = lawTests.find((item) => item.slug === slug);
+        if (!law) return '';
+        return `<div class="custom-selected-row"><span>${esc(law.short_title || law.short || law.title)}</span><b>${count}</b><button type="button" class="btn secondary" data-custom-remove="${esc(slug)}">წაშლა</button></div>`;
+      })
+      .join('');
+    selected.innerHTML = selectedRows || '<p class="meta">ჯერ კანონი არ არის დამატებული.</p>';
+  }
+
+  function openCustomBuilder() {
+    let modal = $('#custom-test-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'custom-test-modal';
+      modal.className = 'modal-backdrop';
+      modal.innerHTML = `<section class="card custom-builder" role="dialog" aria-modal="true" aria-labelledby="custom-test-title"><div class="section-head"><div><div class="eyebrow">საგამოცდო კონსტრუქტორი</div><h2 id="custom-test-title">დაამზადე ტესტი</h2></div><button class="btn secondary" type="button" id="custom-close">დახურვა</button></div><p class="meta">აირჩიე კანონები და მიუთითე რამდენი კითხვა მოვიდეს თითო კანონიდან. ჯამი არის 100 ქულა/100 კითხვა.</p><div class="custom-builder-grid"><div><div class="field"><label for="custom-law-search">კანონის ძებნა</label><input id="custom-law-search" type="search" placeholder="მაგ. კონსტიტუცია"></div><div id="custom-law-list" class="custom-law-list"></div></div><aside><div class="custom-total"><span>ჯამი</span><b id="custom-total">0 / 100</b></div><p class="meta" id="custom-auto-fill"></p><div id="custom-selected-list"></div><button class="btn" type="button" id="custom-start">საგამოცდო ტესტის შექმნა</button></aside></div></section>`;
+      document.body.append(modal);
+      $('#custom-close').onclick = () => modal.hidden = true;
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) modal.hidden = true;
+        const add = event.target.closest('[data-custom-add]');
+        const remove = event.target.closest('[data-custom-remove]');
+        if (add) {
+          const slug = add.dataset.customAdd;
+          const law = lawTests.find((item) => item.slug === slug);
+          const existing = Number(customSelections[slug] || 0);
+          const remaining = Math.max(0, 100 - selectedTotal());
+          const typedInput = [...modal.querySelectorAll('[data-custom-count]')].find((item) => item.dataset.customCount === slug);
+          const typed = Number(typedInput?.value || 0);
+          const next = typed || existing || Math.min(remaining || 10, availableCount(law), 10);
+          customSelections[slug] = Math.max(1, Math.min(availableCount(law), next));
+          renderCustomBuilder();
+        } else if (remove) {
+          delete customSelections[remove.dataset.customRemove];
+          renderCustomBuilder();
+        }
+      });
+      modal.addEventListener('change', (event) => {
+        const input = event.target.closest('[data-custom-count]');
+        if (!input) return;
+        const slug = input.dataset.customCount;
+        const value = Math.max(0, Math.min(Number(input.max), Number(input.value || 0)));
+        if (value) customSelections[slug] = value;
+        else delete customSelections[slug];
+        renderCustomBuilder();
+      });
+      $('#custom-law-search').addEventListener('input', renderCustomBuilder);
+      $('#custom-start').onclick = () => {
+        const selections = Object.entries(customSelections)
+          .filter(([, count]) => Number(count) > 0)
+          .map(([slug, count]) => ({ slug, count: Number(count) }));
+        localStorage.setItem('iuristi_custom_exam', JSON.stringify({
+          id: crypto.randomUUID(),
+          total: 100,
+          selections,
+          createdAt: Date.now(),
+        }));
+        location.href = 'quiz.html?mode=exam&custom=1';
+      };
+    }
+    modal.hidden = false;
+    renderCustomBuilder();
+  }
+
+  function installCustomBuilderButton() {
+    const head = $('.section-head');
+    if (!head || $('#open-custom-test')) return;
+    const button = document.createElement('button');
+    button.className = 'btn gold';
+    button.id = 'open-custom-test';
+    button.type = 'button';
+    button.textContent = 'დაამზადე ტესტი';
+    button.onclick = openCustomBuilder;
+    head.append(button);
+  }
+
   ['input', 'change'].forEach((event) => $('.toolbar').addEventListener(event, render));
+  installCustomBuilderButton();
   render();
   loadLawTests();
 }
