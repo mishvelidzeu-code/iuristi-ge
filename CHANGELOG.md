@@ -6,6 +6,7 @@
 
 ### დამატებულია
 
+- მომზადდა და Supabase-ში აიტვირთა საქართველოს კანონის „დანაშაულის პრევენციის, არასაპატიმრო სასჯელთა აღსრულების წესისა და პრობაციის შესახებ“ 200 პრაქტიკული კითხვა (`data/probation_questions.csv`, `supabase/import_probation_questions.sql`);
 - დაემატა საქართველოს ორგანული კანონის „ნორმატიული აქტების შესახებ“ 21 კაზუსური საგამოცდო სტილის კითხვა და აიტვირთა Supabase-ში (`data/normative_acts_case_questions.csv`, `supabase/import_normative_acts_case_questions.sql`);
 
 ## 2026-07-12
