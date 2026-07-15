@@ -34,6 +34,10 @@ function isExamMode() {
 
 function ensureExamControls() {
   let controls = $('#question-status-controls');
+  if (!isExamMode()) {
+    controls?.remove();
+    return null;
+  }
   if (!controls) {
     controls = document.createElement('div');
     controls.id = 'question-status-controls';
@@ -59,19 +63,21 @@ function ensureExamControls() {
       render();
     });
   }
-  controls.hidden = !isExamMode();
   return controls;
 }
 
 function ensureQuestionSummary() {
   let summary = $('#question-summary');
+  if (!isExamMode()) {
+    summary?.remove();
+    return null;
+  }
   if (!summary) {
     summary = document.createElement('div');
     summary.id = 'question-summary';
     summary.className = 'question-summary';
     $('#question-nav').before(summary);
   }
-  summary.hidden = !isExamMode();
   return summary;
 }
 
