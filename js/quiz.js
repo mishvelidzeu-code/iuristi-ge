@@ -40,7 +40,6 @@ function ensureExamControls() {
     controls.innerHTML = `
       <button class="btn secondary" type="button" data-mark="yellow">ყვითლად მონიშვნა</button>
       <button class="btn secondary" type="button" data-mark="green">მწვანედ მონიშვნა</button>
-      <button class="btn secondary" type="button" data-mark="skipped">გამოტოვება</button>
       <button class="btn secondary" type="button" data-mark="">მონიშვნის მოხსნა</button>
     `;
     $('#feedback').after(controls);
@@ -52,7 +51,6 @@ function ensureExamControls() {
       state.marks = state.marks || {};
       if (mark) {
         state.marks[q.id] = mark;
-        if (mark === 'skipped') delete state.answers[q.id];
       } else {
         delete state.marks[q.id];
       }
@@ -219,7 +217,7 @@ function render() {
     const marks = state.marks || {};
     const yellow = pool.filter((item) => marks[item.id] === 'yellow').length;
     const green = pool.filter((item) => marks[item.id] === 'green').length;
-    const skipped = pool.filter((item) => marks[item.id] === 'skipped').length;
+    const skipped = pool.filter((item) => marks[item.id] === 'skipped' && answers[item.id] === undefined).length;
     const answered = pool.filter((item) => answers[item.id] !== undefined).length;
     summary.innerHTML = `<span class="dot answered"></span>${answered} პასუხი <span class="dot yellow"></span>${yellow} ყვითელი <span class="dot green"></span>${green} მწვანე <span class="dot skipped"></span>${skipped} გამოტოვებული`;
   }
@@ -269,7 +267,20 @@ $('#prev').onclick = () => {
   save();
   render();
 };
-$('#next').onclick = () => (state.index === pool.length - 1 ? complete() : (state.index += 1, save(), render()));
+$('#next').onclick = () => {
+  const q = pool[state.index];
+  if (isExamMode() && state.answers[q.id] === undefined && !state.marks?.[q.id]) {
+    state.marks = state.marks || {};
+    state.marks[q.id] = 'skipped';
+  }
+  if (state.index === pool.length - 1) {
+    complete();
+    return;
+  }
+  state.index += 1;
+  save();
+  render();
+};
 $('#finish').onclick = () => confirm('ნამდვილად გსურთ ტესტის დასრულება?') && complete();
 $('#report').onclick = () => window.App.toast('შეტყობინება მიღებულია. ავტორიზებულ რეჟიმში ის ადმინისტრატორს გადაეგზავნება.');
 setup();
