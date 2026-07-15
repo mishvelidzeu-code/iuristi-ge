@@ -11,9 +11,13 @@ function setMode(nextMode) {
     button.classList.toggle('secondary', !active);
   });
   $('#name-field').classList.toggle('hidden', !isSignup);
+  $('#phone-field').classList.toggle('hidden', !isSignup);
+  $('#confirm-password-field').classList.toggle('hidden', !isSignup);
   $('#auth-submit').textContent = isSignup ? 'ანგარიშის შექმნა' : 'შესვლა';
   $('#auth-title').textContent = isSignup ? 'შექმენით ახალი ანგარიში' : 'კეთილი იყოს თქვენი დაბრუნება';
   $('#password').autocomplete = isSignup ? 'new-password' : 'current-password';
+  $('#phone').required = isSignup;
+  $('#confirm-password').required = isSignup;
   $('#auth-status').textContent = '';
 }
 
@@ -37,9 +41,17 @@ $('#auth-form')?.addEventListener('submit', async (event) => {
 
     const email = $('#email').value.trim();
     const password = $('#password').value;
+    const confirmPassword = $('#confirm-password').value;
     const fullName = $('#full-name').value.trim();
+    const phone = $('#phone').value.trim();
+
+    if (mode === 'signup' && password !== confirmPassword) {
+      status.textContent = 'პაროლები ერთმანეთს არ ემთხვევა.';
+      return;
+    }
+
     const result = mode === 'signup'
-      ? await client.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
+      ? await client.auth.signUp({ email, password, options: { data: { full_name: fullName, phone } } })
       : await client.auth.signInWithPassword({ email, password });
 
     if (result.error) throw result.error;

@@ -14,18 +14,7 @@
 <body>
   <div data-header></div>
   <main id="main" class="auth-shell auth-page">
-    <section class="auth-panel">
-      <div class="auth-copy">
-        <div class="eyebrow">პირადი სასწავლო სივრცე</div>
-        <h1>შედით ანგარიშში და გააგრძელეთ სამართლის სწავლა.</h1>
-        <p class="lead">შეინახეთ შედეგები, აკონტროლეთ პროგრესი და იმუშავეთ სასწავლო თუ საგამოცდო ტესტებზე ერთ სივრცეში.</p>
-        <div class="auth-benefits">
-          <div><span>01</span><b>პროგრესის კონტროლი</b><p>ნახეთ დასრულებული ტესტები და შედეგები.</p></div>
-          <div><span>02</span><b>საგამოცდო რეჟიმი</b><p>ივარჯიშეთ პასუხების წინასწარი ჩვენების გარეშე.</p></div>
-          <div><span>03</span><b>კანონზე მიბმული კითხვები</b><p>ყველა კითხვა დაკავშირებულია კონკრეტულ მუხლთან.</p></div>
-        </div>
-      </div>
-
+    <section class="auth-panel auth-panel-single">
       <section class="card auth-card" aria-labelledby="auth-title">
         <div class="auth-card-head">
           <div>
@@ -45,6 +34,11 @@
             <input id="full-name" autocomplete="name" placeholder="მაგ. ნინო მაისურაძე">
           </div>
 
+          <div class="field hidden" id="phone-field">
+            <label for="phone">ტელეფონის ნომერი</label>
+            <input id="phone" type="tel" autocomplete="tel" placeholder="მაგ. 599 12 34 56">
+          </div>
+
           <div class="field">
             <label for="email">ელფოსტა</label>
             <input id="email" type="email" autocomplete="email" required placeholder="you@example.com">
@@ -53,6 +47,11 @@
           <div class="field">
             <label for="password">პაროლი</label>
             <input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="მინ. 8 სიმბოლო">
+          </div>
+
+          <div class="field hidden" id="confirm-password-field">
+            <label for="confirm-password">გაიმეორეთ პაროლი</label>
+            <input id="confirm-password" type="password" autocomplete="new-password" minlength="8" placeholder="იგივე პაროლი">
           </div>
 
           <p class="status" id="auth-status" role="alert"></p>
