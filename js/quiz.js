@@ -27,6 +27,55 @@ function shuffle(items) {
   return copy;
 }
 
+function isExamMode() {
+  return state?.mode === 'exam';
+}
+
+function ensureExamControls() {
+  let controls = $('#question-status-controls');
+  if (!controls) {
+    controls = document.createElement('div');
+    controls.id = 'question-status-controls';
+    controls.className = 'exam-tools';
+    controls.innerHTML = `
+      <button class="btn secondary" type="button" data-mark="yellow">ყვითლად მონიშვნა</button>
+      <button class="btn secondary" type="button" data-mark="green">მწვანედ მონიშვნა</button>
+      <button class="btn secondary" type="button" data-mark="skipped">გამოტოვება</button>
+      <button class="btn secondary" type="button" data-mark="">მონიშვნის მოხსნა</button>
+    `;
+    $('#feedback').after(controls);
+    controls.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-mark]');
+      if (!button) return;
+      const q = pool[state.index];
+      const mark = button.dataset.mark;
+      state.marks = state.marks || {};
+      if (mark) {
+        state.marks[q.id] = mark;
+        if (mark === 'skipped') delete state.answers[q.id];
+      } else {
+        delete state.marks[q.id];
+      }
+      save();
+      render();
+    });
+  }
+  controls.hidden = !isExamMode();
+  return controls;
+}
+
+function ensureQuestionSummary() {
+  let summary = $('#question-summary');
+  if (!summary) {
+    summary = document.createElement('div');
+    summary.id = 'question-summary';
+    summary.className = 'question-summary';
+    $('#question-nav').before(summary);
+  }
+  summary.hidden = !isExamMode();
+  return summary;
+}
+
 function mapRemoteQuestion(row) {
   return {
     id: row.id,
@@ -96,6 +145,7 @@ async function setup() {
     questionIds: pool.map((q) => q.id),
     index: 0,
     answers: {},
+    marks: {},
     startedAt: Date.now(),
     duration: testDurationSeconds,
     mode: params.get('mode') || 'learning',
@@ -113,8 +163,10 @@ async function setup() {
 function render() {
   const q = pool[state.index];
   if (!q) return;
+  const exam = isExamMode();
+  document.body.classList.toggle('exam-mode', exam);
 
-  $('#question-count').textContent = `კითხვა ${state.index + 1} / ${pool.length}`;
+  $('#question-count').textContent = `${exam ? 'საგამოცდო ტესტი' : 'სასწავლო ტესტი'} • კითხვა ${state.index + 1} / ${pool.length}`;
   $('#progress-bar').style.width = `${((state.index + 1) / pool.length) * 100}%`;
   $('#question-text').textContent = q.text;
   $('#law-ref').textContent = `${q.law} • ${q.article}${q.version ? ` • რედაქცია: ${q.version}` : ''}`;
@@ -125,14 +177,15 @@ function render() {
     const b = document.createElement('button');
     const selected = state.answers[q.id];
     b.className = 'option';
-    if (selected !== undefined && i === q.answer) b.classList.add('correct');
-    if (selected === i && selected !== q.answer) b.classList.add('incorrect');
+    if (!exam && selected !== undefined && i === q.answer) b.classList.add('correct');
+    if (!exam && selected === i && selected !== q.answer) b.classList.add('incorrect');
     if (selected === i) b.classList.add('selected');
     b.type = 'button';
     b.textContent = `${String.fromCharCode(65 + i)}. ${text}`;
     b.onclick = () => {
-      if (state.answers[q.id] !== undefined) return;
+      if (!exam && state.answers[q.id] !== undefined) return;
       state.answers[q.id] = i;
+      if (exam && state.marks?.[q.id] === 'skipped') delete state.marks[q.id];
       save();
       render();
     };
@@ -141,7 +194,7 @@ function render() {
 
   const selected = state.answers[q.id];
   const feedback = $('#feedback');
-  if (selected === undefined) {
+  if (exam || selected === undefined) {
     feedback.hidden = true;
     feedback.className = 'notice';
     feedback.textContent = '';
@@ -150,13 +203,36 @@ function render() {
     feedback.className = selected === q.answer ? 'notice correct-feedback' : 'notice';
     feedback.textContent = q.explanation;
   }
+  const controls = ensureExamControls();
+  if (exam) {
+    const mark = state.marks?.[q.id] || '';
+    controls.querySelectorAll('button[data-mark]').forEach((button) => {
+      button.classList.toggle('active-mark', button.dataset.mark === mark);
+    });
+  }
 
   $('#prev').disabled = state.index === 0;
   $('#next').textContent = state.index === pool.length - 1 ? 'ტესტის დასრულება' : 'შემდეგი კითხვა';
+  const summary = ensureQuestionSummary();
+  if (exam) {
+    const answers = state.answers || {};
+    const marks = state.marks || {};
+    const yellow = pool.filter((item) => marks[item.id] === 'yellow').length;
+    const green = pool.filter((item) => marks[item.id] === 'green').length;
+    const skipped = pool.filter((item) => marks[item.id] === 'skipped').length;
+    const answered = pool.filter((item) => answers[item.id] !== undefined).length;
+    summary.innerHTML = `<span class="dot answered"></span>${answered} პასუხი <span class="dot yellow"></span>${yellow} ყვითელი <span class="dot green"></span>${green} მწვანე <span class="dot skipped"></span>${skipped} გამოტოვებული`;
+  }
   $('#question-nav').replaceChildren(...pool.map((x, i) => {
     const b = document.createElement('button');
+    const mark = state.marks?.[x.id];
+    const answered = state.answers?.[x.id] !== undefined;
     b.textContent = i + 1;
-    b.className = i === state.index ? 'active' : '';
+    b.className = [
+      i === state.index ? 'active' : '',
+      answered ? 'answered' : '',
+      mark ? `marked-${mark}` : '',
+    ].filter(Boolean).join(' ');
     b.onclick = () => {
       state.index = i;
       save();

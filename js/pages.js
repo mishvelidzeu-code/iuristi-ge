@@ -28,7 +28,7 @@ function lawTestCard(law) {
   const count = law.question_count ?? law.count ?? 0;
   const title = law.title || law.short_title || law.short;
   const desc = law.description || law.desc || '';
-  return `<article class="card"><div class="eyebrow">${esc(directionNames[direction] || 'სამართლის')} ტესტი</div><h3>${esc(title)}</h3><p class="meta">${esc(desc)}</p><div class="card-footer"><span>${count} კითხვა</span><a class="btn" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=learning">დაწყება</a></div></article>`;
+  return `<article class="card"><div class="eyebrow">${esc(directionNames[direction] || 'სამართლის')} ტესტი</div><h3>${esc(title)}</h3><p class="meta">${esc(desc)}</p><div class="card-footer"><span>${count} კითხვა</span><div class="test-actions"><a class="btn" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=learning">სასწავლო ტესტი</a><a class="btn secondary" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=exam">საგამოცდო ტესტი</a></div></div></article>`;
 }
 
 if ($('#categories')) $('#categories').remove();
