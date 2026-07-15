@@ -97,20 +97,38 @@ def parse_articles(text: str) -> list[dict[str, str]]:
 
 def sentence_candidates(article: dict[str, str]) -> list[str]:
     pieces: list[str] = []
-    for line in article["content"].splitlines():
-        line = clean_space(line)
+    lead_context = ""
+    for raw_line in article["content"].splitlines():
+        line = clean_space(raw_line)
         if line:
+            line = re.sub(r"^[0-9]+\.\s*", "", line)
+            if line.endswith(":"):
+                lead_context = line[:-1]
+                continue
+            bullet_match = re.match(r"^[ა-ჰ](?:\.[ა-ჰ])?\)\s*(.+)$", line)
+            if bullet_match and lead_context:
+                line = f"{lead_context} {bullet_match.group(1)}"
+            elif bullet_match:
+                line = f"„{article['title']}“ საკითხზე კანონით გათვალისწინებულია: {bullet_match.group(1)}"
+            elif line.endswith("."):
+                lead_context = ""
             pieces.extend(re.split(r"(?<=[.!?])\s+", line))
     out: list[str] = []
     for piece in pieces:
         piece = clean_space(piece)
         piece = re.sub(r"^[0-9]+\.\s*", "", piece)
         piece = re.sub(r"^[ა-ჰ](?:\.[ა-ჰ])?\)\s*", "", piece)
-        if not (25 <= len(piece) <= 260):
+        if piece.endswith(":"):
+            continue
+        if not (25 <= len(piece) <= 480):
             continue
         if any(bad in piece for bad in ["№", "ვებგვერდი", "ამოღებულია", "ძალადაკარგულია"]):
             continue
         out.append(piece)
+    if not out and article["law_article"] == "მუხლი 46":
+        out.append(
+            "ამ კანონის ამოქმედებისთანავე ძალადაკარგულად იქნა ცნობილი საქართველოს 2001 წლის 19 ივნისის კანონი „არასაპატიმრო სასჯელთა აღსრულების წესისა და პრობაციის შესახებ“"
+        )
     return out[:3]
 
 
@@ -137,7 +155,7 @@ def definition_candidates(articles: list[dict[str, str]]) -> list[dict[str, str]
     return items
 
 
-def trim_option(value: str, limit: int = 210) -> str:
+def trim_option(value: str, limit: int = 340) -> str:
     value = clean_space(value).rstrip(";.")
     if len(value) <= limit:
         return value
@@ -212,6 +230,13 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
 
     statements = [item["sentence"] for item in statement_items]
     title_options = [article["title"] for article in articles if len(article["title"]) <= 120]
+    topic_overrides = {
+        "მუხლი 26": "მსჯავრდებულის სამუშაო ადგილზე დამსაქმებლის მოვალეობა",
+        "მუხლი 37": "გამასწორებელი სამუშაოს შესრულების ადგილზე დამსაქმებლის მოვალეობა",
+    }
+
+    def topic(article: dict[str, str]) -> str:
+        return topic_overrides.get(article["law_article"], article["title"])
 
     for article in articles:
         if len(rows) >= QUESTION_LIMIT:
@@ -219,9 +244,9 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
         article_statements = [item for item in statement_items if item["article"] == article["law_article"]]
         if article_statements:
             prompts = [
-                "რომელი დებულებაა კანონთან შესაბამისი?",
+                "რომელი სამართლებრივი მიდგომაა სწორი?",
+                "რომელი გადაწყვეტილება შეესაბამება კანონს?",
                 "რომელი წესი უნდა გამოიყენოს უფლებამოსილმა ორგანომ?",
-                "რომელი სამართლებრივი მოთხოვნაა სწორი?",
             ]
             for statement_index, item in enumerate(article_statements[:2]):
                 if len(rows) >= QUESTION_LIMIT:
@@ -235,8 +260,9 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
                     distractors = [x for x in statements if x != item["sentence"]]
                 random.shuffle(distractors)
                 text = (
-                    "პრობაციისა და არასაპატიმრო სასჯელის აღსრულებასთან დაკავშირებული საკითხის განხილვისას, "
-                    f"„{item['title']}“ ({item['article']}) საკითხზე {LAW_GENITIVE} შესაბამისად, {prompts[statement_index]}"
+                    f"პრობაციის ბიუროში მსჯავრდებულის სააღსრულებო საქმის წარმოებისას წარმოიშვა „{topic(article)}“ საკითხი. "
+                    f"საქართველოს კანონის „დანაშაულის პრევენციის, არასაპატიმრო სასჯელთა აღსრულების წესისა და პრობაციის შესახებ“ "
+                    f"შესაბამისად, {prompts[statement_index]}"
                 )
                 rows.append(make_row(
                     text=text,
@@ -263,7 +289,7 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
                 diff=difficulty(len(rows), article["title"]),
             ))
 
-    definitions = definition_candidates(articles)
+    definitions = []
     definition_pool = [item["definition"] for item in definitions]
     seen_definition_terms: set[tuple[str, str]] = set()
     for item in definitions:
@@ -315,7 +341,10 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
         idx = len(rows) % 4
         stem = follow_up_stems[round_number % len(follow_up_stems)]
         rows.append(make_row(
-            text=f"{stem} „{title}“ ({article['law_article']}) საკითხზე {LAW_GENITIVE} შესაბამისად, რომელი პასუხია სწორი?",
+            text=(
+                f"{stem} „{topic(article)}“ საკითხზე. საქართველოს კანონის „დანაშაულის პრევენციის, "
+                f"არასაპატიმრო სასჯელთა აღსრულების წესისა და პრობაციის შესახებ“ შესაბამისად, რომელი გადაწყვეტილებაა სწორი?"
+            ),
             article=article["law_article"],
             title=title,
             correct=correct,
@@ -402,6 +431,8 @@ begin
   on conflict (slug) do update
   set title=excluded.title, short_title=excluded.short_title, direction_slug=excluded.direction_slug, description=excluded.description, current_version_date=excluded.current_version_date, is_active=true, needs_review=false
   returning id into v_law_id;
+
+  delete from public.questions where law_id = v_law_id;
 
   for r in select * from (values
 {",\n".join(article_values)}
