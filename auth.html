@@ -1,1 +1,67 @@
-<!doctype html><html lang="ka"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>ავტორიზაცია | იურისტი</title><link rel="stylesheet" href="css/styles.css"><script src="config.js" onerror="this.remove()"></script><script type="module" src="js/app.js"></script><script type="module" src="js/auth.js"></script></head><body><div data-header></div><main id="main" class="auth-shell"><section class="card auth-card"><div class="tabs"><button class="btn tab" data-mode="login" aria-selected="true">შესვლა</button><button class="btn secondary tab" data-mode="signup" aria-selected="false">რეგისტრაცია</button></div><h1>კეთილი იყოს თქვენი დაბრუნება</h1><form id="auth-form"><div class="field hidden" id="name-field"><label for="full-name">სახელი და გვარი</label><input id="full-name" autocomplete="name"></div><div class="field"><label for="email">ელფოსტა</label><input id="email" type="email" required></div><div class="field"><label for="password">პაროლი</label><input id="password" type="password" minlength="8" required></div><p class="status" id="auth-status" role="alert"></p><button class="btn" id="auth-submit">შესვლა</button> <button class="btn secondary" id="reset-password" type="button">პაროლის აღდგენა</button></form></section></main></body></html>
+<!doctype html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>შესვლა და რეგისტრაცია | იურისტი</title>
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="config.js" onerror="this.remove()"></script>
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/auth.js"></script>
+</head>
+<body>
+  <div data-header></div>
+  <main id="main" class="auth-shell auth-page">
+    <section class="auth-panel">
+      <div class="auth-copy">
+        <div class="eyebrow">პირადი სასწავლო სივრცე</div>
+        <h1>შედით ანგარიშში და გააგრძელეთ სამართლის სწავლა.</h1>
+        <p class="lead">შეინახეთ შედეგები, აკონტროლეთ პროგრესი და იმუშავეთ სასწავლო თუ საგამოცდო ტესტებზე ერთ სივრცეში.</p>
+        <div class="auth-benefits">
+          <div><span>01</span><b>პროგრესის კონტროლი</b><p>ნახეთ დასრულებული ტესტები და შედეგები.</p></div>
+          <div><span>02</span><b>საგამოცდო რეჟიმი</b><p>ივარჯიშეთ პასუხების წინასწარი ჩვენების გარეშე.</p></div>
+          <div><span>03</span><b>კანონზე მიბმული კითხვები</b><p>ყველა კითხვა დაკავშირებულია კონკრეტულ მუხლთან.</p></div>
+        </div>
+      </div>
+
+      <section class="card auth-card" aria-labelledby="auth-title">
+        <div class="auth-card-head">
+          <div>
+            <div class="eyebrow">ავტორიზაცია</div>
+            <h2 id="auth-title">კეთილი იყოს თქვენი დაბრუნება</h2>
+          </div>
+        </div>
+
+        <div class="tabs auth-tabs" role="tablist" aria-label="ავტორიზაციის ტიპი">
+          <button class="btn tab" data-mode="login" type="button" aria-selected="true">შესვლა</button>
+          <button class="btn secondary tab" data-mode="signup" type="button" aria-selected="false">რეგისტრაცია</button>
+        </div>
+
+        <form id="auth-form" class="auth-form">
+          <div class="field hidden" id="name-field">
+            <label for="full-name">სახელი და გვარი</label>
+            <input id="full-name" autocomplete="name" placeholder="მაგ. ნინო მაისურაძე">
+          </div>
+
+          <div class="field">
+            <label for="email">ელფოსტა</label>
+            <input id="email" type="email" autocomplete="email" required placeholder="you@example.com">
+          </div>
+
+          <div class="field">
+            <label for="password">პაროლი</label>
+            <input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="მინ. 8 სიმბოლო">
+          </div>
+
+          <p class="status" id="auth-status" role="alert"></p>
+
+          <button class="btn auth-submit" id="auth-submit">შესვლა</button>
+          <button class="btn secondary auth-reset" id="reset-password" type="button">პაროლის აღდგენა</button>
+        </form>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
