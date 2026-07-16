@@ -21,7 +21,7 @@ LAW_SLUG = "probation"
 CATEGORY_SLUG = "criminal"
 SUBCATEGORY_SLUG = "probation"
 VERSION_DATE = "2025-12-25"
-QUESTION_LIMIT = 200
+QUESTION_LIMIT = 150
 
 HEADER = [
     "category_slug",
@@ -253,8 +253,8 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
                     break
                 idx = len(rows) % 4
                 distractors = [
-                    other["sentence"] for other in statement_items
-                    if other["article"] != item["article"] and abs(len(other["sentence"]) - len(item["sentence"])) < 75
+                    other["sentence"] for other in article_statements
+                    if other["sentence"] != item["sentence"] and abs(len(other["sentence"]) - len(item["sentence"])) < 180
                 ]
                 if len(distractors) < 3:
                     distractors = [x for x in statements if x != item["sentence"]]
@@ -327,8 +327,8 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
             item = article_statements[round_number % len(article_statements)]
             correct = item["sentence"]
             distractors = [
-                other["sentence"] for other in statement_items
-                if other["article"] != item["article"] and abs(len(other["sentence"]) - len(correct)) < 75
+                other["sentence"] for other in article_statements
+                if other["sentence"] != item["sentence"] and abs(len(other["sentence"]) - len(correct)) < 180
             ]
             title = item["title"]
         else:
@@ -375,6 +375,14 @@ def build_rows(articles: list[dict[str, str]]) -> list[dict[str, str]]:
             break
         round_number += 1
 
+    title_by_article = {article["law_article"]: article["title"] for article in articles}
+    for row in rows:
+        title = title_by_article.get(row["law_article"], "საკითხი")
+        row["text"] = (
+            f"სააგენტოში განიხილავენ „{title}“ საკითხზე გადაწყვეტილების მიღებას. "
+            f"საქართველოს კანონის „დანაშაულის პრევენციის, არასაპატიმრო სასჯელთა აღსრულების წესისა და პრობაციის შესახებ“ "
+            f"შესაბამისად, რომელი სამართლებრივი მიდგომაა სწორი?"
+        )
     return rows[:QUESTION_LIMIT]
 
 
