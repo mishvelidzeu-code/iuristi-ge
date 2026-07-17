@@ -116,15 +116,23 @@ async function loadQuestionsFromLawRpc(client) {
   const { data: laws, error } = await client.rpc('get_law_catalog', { p_direction: null });
   if (error) throw error;
   const activeLaws = (laws || []).filter((law) => Number(law.question_count || 0) > 0);
-  const chunks = await Promise.all(activeLaws.map(async (law) => {
-    const { data, error: questionError } = await client.rpc('get_public_quiz_questions_by_law', {
-      p_law_slug: law.slug,
-      p_count: 200,
-    });
-    if (questionError) throw questionError;
-    return data || [];
-  }));
-  return chunks.flat().map(mapRemoteQuestion);
+  const questions = [];
+
+  for (const law of activeLaws) {
+    try {
+      const { data, error: questionError } = await client.rpc('get_public_quiz_questions_by_law', {
+        p_law_slug: law.slug,
+        p_count: 200,
+      });
+      if (questionError) throw questionError;
+      questions.push(...(data || []));
+    } catch (questionError) {
+      console.warn(`Quick test fallback failed for law: ${law.slug}`, questionError);
+    }
+  }
+
+  if (!questions.length) throw new Error('No quick test questions could be loaded');
+  return questions.map(mapRemoteQuestion);
 }
 
 async function loadQuestionPool() {
@@ -133,7 +141,8 @@ async function loadQuestionPool() {
   let questions;
   try {
     questions = await loadQuestionsFromQuickRpc(client);
-  } catch {
+  } catch (quickRpcError) {
+    console.warn('Quick test RPC unavailable; using law question fallback.', quickRpcError);
     questions = await loadQuestionsFromLawRpc(client);
     questions = await loadSourceUrls(client, questions);
   }
