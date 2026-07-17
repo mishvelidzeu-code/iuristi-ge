@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>სწრაფი ტესტი | იურისტი</title>
+  <meta name="description" content="სწრაფი სამართლებრივი ტესტები 5, 10, დღის და 60-წამიან რეჟიმებში.">
+  <link rel="canonical" href="https://iuristi.ge/quick-test">
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="config.js" onerror="this.remove()"></script>
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/quick-test.js"></script>
+</head>
+<body>
+  <div data-header></div>
+  <main id="main" class="section quick-test-page">
+    <div class="container">
+      <section id="quick-home">
+        <div class="section-head quick-section-head">
+          <div>
+            <div class="eyebrow">სწრაფი ტესტი</div>
+            <h1>აირჩიე მოკლე რეჟიმი</h1>
+            <p class="lead">კითხვები იტვირთება არსებული კითხვების ბაზიდან.</p>
+          </div>
+        </div>
+        <div class="quick-mode-grid">
+          <article class="card quick-mode-card">
+            <div class="eyebrow">5 კითხვა</div>
+            <h2>სწრაფი შემოწმება</h2>
+            <p class="meta">სწრაფად შეამოწმე ცოდნა 5 შემთხვევითი კითხვით.</p>
+            <button class="btn" type="button" data-start-mode="five">დაწყება</button>
+          </article>
+          <article class="card quick-mode-card">
+            <div class="eyebrow">10 კითხვა</div>
+            <h2>მოკლე ტესტი</h2>
+            <p class="meta">გაიარე მოკლე ტესტი 10 შემთხვევითი კითხვით.</p>
+            <button class="btn" type="button" data-start-mode="ten">დაწყება</button>
+          </article>
+          <article class="card quick-mode-card">
+            <div class="eyebrow">დღის ტესტი</div>
+            <h2>დღიური 10 კითხვა</h2>
+            <p class="meta">ყოველდღე ახალი 10 კითხვა.</p>
+            <button class="btn" type="button" data-start-mode="daily">დაწყება</button>
+          </article>
+          <article class="card quick-mode-card">
+            <div class="eyebrow">60 წამი</div>
+            <h2>გამოწვევა</h2>
+            <p class="meta">უპასუხე მაქსიმალურად მეტ კითხვას 60 წამში.</p>
+            <button class="btn" type="button" data-start-mode="challenge">დაწყება</button>
+          </article>
+        </div>
+      </section>
+
+      <section id="quick-loading" class="card quick-status-card" hidden>
+        <div class="loading"></div>
+        <p>ტესტი იტვირთება...</p>
+      </section>
+
+      <section id="quick-error" class="card quick-status-card" hidden>
+        <p id="quick-error-text">ტესტის ჩატვირთვა ვერ მოხერხდა. სცადეთ ხელახლა.</p>
+        <button class="btn secondary" type="button" id="quick-error-back">სწრაფი ტესტების გვერდზე დაბრუნება</button>
+      </section>
+
+      <section id="quick-runner" class="quiz-layout" hidden>
+        <div class="card">
+          <div class="section-head quick-runner-head">
+            <div>
+              <b id="quick-mode-title"></b>
+              <p class="meta" id="quick-date" hidden></p>
+            </div>
+            <b id="quick-timer" hidden>1:00</b>
+          </div>
+          <div class="progress"><span id="quick-progress"></span></div>
+          <p class="meta" id="quick-count"></p>
+          <h1 id="quick-question"></h1>
+          <p class="meta" id="quick-law-ref"></p>
+          <div id="quick-options"></div>
+        </div>
+        <aside class="card quick-side">
+          <h3>პროგრესი</h3>
+          <div class="question-nav" id="quick-nav"></div>
+          <button class="btn danger" type="button" id="quick-finish">ტესტის დასრულება</button>
+          <button class="btn secondary" type="button" id="quick-back-home">სწრაფი ტესტები</button>
+        </aside>
+      </section>
+
+      <section id="quick-result" class="quick-result" hidden>
+        <div class="card quick-result-summary">
+          <div class="eyebrow">ტესტი დასრულებულია</div>
+          <div class="result-score" id="quick-score">0%</div>
+          <h1 id="quick-result-title">შედეგი</h1>
+          <div class="grid">
+            <div><b id="quick-correct">0</b><p class="meta">სწორი პასუხი</p></div>
+            <div><b id="quick-wrong">0</b><p class="meta">არასწორი პასუხი</p></div>
+            <div><b id="quick-total">0</b><p class="meta">სულ პასუხი</p></div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn" type="button" id="quick-retry">თავიდან დაწყება</button>
+            <button class="btn secondary" type="button" id="quick-new">ახალი ტესტი</button>
+            <button class="btn secondary" type="button" id="quick-home-button">სწრაფი ტესტების გვერდზე დაბრუნება</button>
+          </div>
+        </div>
+        <div class="quick-detail-list" id="quick-details"></div>
+      </section>
+    </div>
+  </main>
+  <div data-footer></div>
+</body>
+</html>
