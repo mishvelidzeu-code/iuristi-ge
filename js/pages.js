@@ -186,13 +186,94 @@ if ($('#test-list')) {
   function installCustomBuilderButton() {
     const head = $('.section-head');
     if (!head || $('#open-custom-test')) return;
+    let actions = $('#test-page-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.id = 'test-page-actions';
+      actions.className = 'test-page-actions';
+      head.append(actions);
+    }
     const button = document.createElement('button');
     button.className = 'btn gold';
     button.id = 'open-custom-test';
     button.type = 'button';
     button.textContent = 'დაამზადე ტესტი';
     button.onclick = openCustomBuilder;
-    head.append(button);
+    actions.append(button);
+
+    const orderButton = document.createElement('button');
+    orderButton.className = 'btn order-test-btn';
+    orderButton.id = 'open-test-order';
+    orderButton.type = 'button';
+    orderButton.textContent = 'ტესტის შეკვეთა';
+    orderButton.onclick = openTestOrderModal;
+    actions.append(orderButton);
+  }
+
+  function openTestOrderModal() {
+    let modal = $('#test-order-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'test-order-modal';
+      modal.className = 'modal-backdrop';
+      modal.innerHTML = `<section class="card test-order-modal" role="dialog" aria-modal="true" aria-labelledby="test-order-title"><div class="section-head"><div><div class="eyebrow">ინდივიდუალური შეკვეთა</div><h2 id="test-order-title">ტესტის შეკვეთა</h2></div><button class="btn secondary" type="button" id="test-order-close">დახურვა</button></div><p class="meta">დაწერე რა ტიპის ტესტი გჭირდება, რა თემაზე, რა სირთულის, რისთვის გჭირდება და რამდენ კითხვას ელოდები. მოთხოვნა ჩაიწერება ადმინთან და გაიხსნება ელფოსტის გაგზავნის ფანჯარაც.</p><form id="test-order-form" class="test-order-form"><div class="field"><label for="order-name">სახელი</label><input id="order-name" name="name" autocomplete="name" placeholder="თქვენი სახელი"></div><div class="field"><label for="order-contact">საკონტაქტო ელფოსტა ან ტელეფონი</label><input id="order-contact" name="contact" autocomplete="email" placeholder="ელფოსტა ან ტელეფონი" required></div><div class="field"><label for="order-details">რა ტესტი გჭირდება?</label><textarea id="order-details" name="details" rows="8" placeholder="მაგალითად: მჭირდება 100 კითხვა სისხლის სამართლის პროცესში, საშუალო/რთული, გამოცდისთვის, კაზუსური და განმარტებებით..." required></textarea></div><p class="status" id="test-order-status" role="alert"></p><button class="btn order-test-btn" type="submit">შეკვეთის გაგზავნა</button></form></section>`;
+      document.body.append(modal);
+      $('#test-order-close').onclick = () => modal.hidden = true;
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) modal.hidden = true;
+      });
+      $('#test-order-form').onsubmit = submitTestOrder;
+    }
+    modal.hidden = false;
+    $('#order-details')?.focus();
+  }
+
+  async function submitTestOrder(event) {
+    event.preventDefault();
+    const status = $('#test-order-status');
+    const form = event.currentTarget;
+    const name = $('#order-name').value.trim();
+    const contact = $('#order-contact').value.trim();
+    const details = $('#order-details').value.trim();
+    const adminEmail = 'toilet.ge@gmail.com';
+    if (!contact || !details) {
+      status.textContent = 'საკონტაქტო და განმარტება აუცილებელია.';
+      return;
+    }
+    status.textContent = 'იგზავნება...';
+    let stored = false;
+    try {
+      const client = await window.App.getClient();
+      if (client) {
+        const { error } = await client.from('test_orders').insert({
+          name: name || null,
+          contact,
+          details,
+          page_url: location.href,
+          status: 'new',
+        });
+        if (error) throw error;
+        stored = true;
+      }
+    } catch (error) {
+      console.warn('test order db insert failed', error);
+    }
+
+    const subject = 'ტესტის შეკვეთა - iuristi.ge';
+    const body = [
+      `სახელი: ${name || '-'}`,
+      `საკონტაქტო: ${contact}`,
+      '',
+      'მოთხოვნა:',
+      details,
+      '',
+      `გვერდი: ${location.href}`,
+    ].join('\n');
+    window.location.href = `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    status.textContent = stored
+      ? 'შეკვეთა ჩაიწერა ადმინთან. ელფოსტის ფანჯარაც გაიხსნა.'
+      : 'ელფოსტის ფანჯარა გაიხსნა. თუ არ გაიხსნა, გადაამოწმე ბრაუზერის mail app.';
+    form.reset();
   }
 
   ['input', 'change'].forEach((event) => $('.toolbar').addEventListener(event, render));
