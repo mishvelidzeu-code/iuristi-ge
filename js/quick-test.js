@@ -218,13 +218,25 @@ function answerCurrent(index) {
   if (!state || state.completed) return;
   if (modes[state.mode].timed && remainingSeconds() <= 0) return;
   const question = state.questions[state.index];
-  if (!question) return;
+  if (!question || state.answers[state.index]) return;
   state.answers[state.index] = {
     questionId: question.id,
     selected: index,
     correct: index === question.answer,
   };
-  if (state.index >= state.questions.length - 1 || (!modes[state.mode].timed && state.answers.length >= state.questions.length)) {
+  save();
+
+  // The timed challenge stays fast; learning modes reveal feedback before unlocking the next step.
+  if (modes[state.mode].timed) {
+    advance();
+    return;
+  }
+  render();
+}
+
+function advance() {
+  if (!state || state.completed) return;
+  if (state.index >= state.questions.length - 1) {
     complete();
     return;
   }
@@ -267,23 +279,42 @@ function render() {
   const options = $('#quick-options');
   options.replaceChildren();
   const locked = mode.timed && remainingSeconds() <= 0;
+  const currentAnswer = state.answers[state.index];
   question.options.forEach((text, index) => {
     const button = document.createElement('button');
     button.className = 'option';
     button.type = 'button';
-    button.disabled = locked;
+    button.disabled = locked || Boolean(currentAnswer);
+    if (currentAnswer) {
+      if (index === question.answer) button.classList.add('is-correct');
+      if (index === currentAnswer.selected && !currentAnswer.correct) button.classList.add('is-wrong');
+    }
     button.textContent = `${optionLetters[index]}. ${text}`;
     button.addEventListener('click', () => answerCurrent(index));
     options.append(button);
   });
+  const feedback = $('#quick-feedback');
+  const next = $('#quick-next');
+  feedback.hidden = !currentAnswer || mode.timed;
+  next.hidden = !currentAnswer || mode.timed;
+  if (currentAnswer && !mode.timed) {
+    $('#quick-feedback-status').textContent = currentAnswer.correct ? 'სწორია' : 'სწორი პასუხია';
+    $('#quick-feedback-status').className = `quick-feedback-status ${currentAnswer.correct ? 'is-correct' : 'is-wrong'}`;
+    $('#quick-feedback-text').textContent = question.explanation || [question.law, question.article].filter(Boolean).join(' • ');
+    next.textContent = state.index === state.questions.length - 1 ? 'შედეგის ნახვა' : 'შემდეგი საფეხური';
+  }
+
+  const firstUnanswered = state.answers.findIndex((answer) => !answer);
+  const unlockedThrough = firstUnanswered === -1 ? state.questions.length - 1 : firstUnanswered;
   $('#quick-nav').replaceChildren(...state.questions.map((item, index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = index + 1;
-    button.disabled = mode.timed;
+    button.disabled = mode.timed || index > unlockedThrough;
     button.className = [
       index === state.index ? 'active' : '',
       state.answers[index] ? 'answered' : '',
+      index > unlockedThrough ? 'locked' : '',
     ].filter(Boolean).join(' ');
     button.addEventListener('click', () => {
       state.index = index;
@@ -413,6 +444,7 @@ $('#quick-back-home').addEventListener('click', () => {
 $('#quick-finish').addEventListener('click', () => {
   if (confirm('ნამდვილად გსურთ ტესტის დასრულება?')) complete();
 });
+$('#quick-next').addEventListener('click', advance);
 $('#quick-retry').addEventListener('click', () => {
   const mode = modes[state.mode];
   state = {
