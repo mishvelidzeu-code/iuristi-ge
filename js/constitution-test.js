@@ -1,3 +1,5 @@
+import { requireTestAccess } from './test-access.js';
+
 const csvPath = 'data/constitution_questions.csv';
 const optionLetters = ['A', 'B', 'C', 'D'];
 const $ = (selector) => document.querySelector(selector);
@@ -157,7 +159,10 @@ $('#restart').addEventListener('click', () => {
   render();
 });
 
-setup().catch((error) => {
+requireTestAccess().then((allowed) => {
+  if (!allowed) return;
+  return setup();
+}).catch((error) => {
   $('#question-count').textContent = 'შეცდომა';
   $('#question-text').textContent = error.message;
 });

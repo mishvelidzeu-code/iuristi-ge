@@ -1,3 +1,5 @@
+import { requireTestAccess } from './test-access.js';
+
 const $ = (selector, root = document) => root.querySelector(selector);
 
 const storageKey = 'iuristi_quick_test_state';
@@ -465,4 +467,6 @@ $('#quick-home-button').addEventListener('click', () => {
   show('#quick-home');
 });
 
-if (!restore()) show('#quick-home');
+requireTestAccess().then((allowed) => {
+  if (allowed && !restore()) show('#quick-home');
+});

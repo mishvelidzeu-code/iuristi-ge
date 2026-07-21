@@ -1,4 +1,5 @@
 import { questions } from './data.js';
+import { requireTestAccess } from './test-access.js';
 
 const $ = (selector) => document.querySelector(selector);
 const key = 'iuristi_active_attempt';
@@ -338,4 +339,6 @@ $('#next').onclick = () => {
 };
 $('#finish').onclick = () => confirm('ნამდვილად გსურთ ტესტის დასრულება?') && complete();
 $('#report').onclick = () => window.App.toast('შეტყობინება მიღებულია. ავტორიზებულ რეჟიმში ის ადმინისტრატორს გადაეგზავნება.');
-setup();
+requireTestAccess().then((allowed) => {
+  if (allowed) setup();
+});

@@ -1,6 +1,8 @@
 const $ = (selector) => document.querySelector(selector);
 
-let mode = 'login';
+const authParams = new URLSearchParams(location.search);
+const returnTo = authParams.get('next') || 'profile.html';
+let mode = authParams.get('mode') === 'signup' ? 'signup' : 'login';
 
 function setMode(nextMode) {
   mode = nextMode;
@@ -55,7 +57,9 @@ $('#auth-form')?.addEventListener('submit', async (event) => {
       : await client.auth.signInWithPassword({ email, password });
 
     if (result.error) throw result.error;
-    location.href = 'profile.html';
+    location.href = returnTo.startsWith('quick-test.html') || returnTo.startsWith('quiz.html') || returnTo.startsWith('constitution-test.html')
+      ? returnTo
+      : 'profile.html';
   } catch (error) {
     status.textContent = window.App.friendlyError(error);
   } finally {
@@ -83,4 +87,4 @@ $('#reset-password')?.addEventListener('click', async () => {
   }
 });
 
-setMode('login');
+setMode(mode);
