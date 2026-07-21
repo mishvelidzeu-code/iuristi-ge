@@ -6,8 +6,8 @@ if (target) {
     <h1>აღმოაჩინე ჩვენი სხვა პროექტები</h1>
     <p class="lead">ისტორია, სპორტი, შინაური ცხოველები და საქართველო ერთ სივრცეში.</p>
     <div class="about-project-links">
-      <a href="https://www.giftgrb.ge/" target="_blank" rel="noopener">
-        <b>GIFTGRB</b>
+      <a href="https://gvarigen.ge/" target="_blank" rel="noopener">
+        <b>gvarigen.ge</b>
         <span>მოიკვლიე შენი გვარის ისტორია</span>
         <small>გადასვლა საიტზე</small>
       </a>
