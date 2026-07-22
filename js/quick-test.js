@@ -3,7 +3,9 @@ import { requireTestAccess } from './test-access.js';
 const $ = (selector, root = document) => root.querySelector(selector);
 
 const storageKey = 'iuristi_quick_test_state';
+const progressKey = 'iuristi_quick_test_progress';
 const optionLetters = ['A', 'B', 'C', 'D'];
+const modeOrder = ['five', 'ten', 'daily', 'challenge'];
 const modes = {
   five: { title: '5 კითხვა', count: 5, timed: false },
   ten: { title: '10 კითხვა', count: 10, timed: false },
@@ -13,6 +15,66 @@ const modes = {
 
 let state = null;
 let timer = null;
+
+function loadProgress() {
+  const today = tbilisiDateParts().key;
+  try {
+    const saved = JSON.parse(localStorage.getItem(progressKey) || 'null');
+    if (saved && saved.dateKey === today && Array.isArray(saved.completed)) return saved;
+  } catch {
+    // fall through to a fresh progress record
+  }
+  return { dateKey: today, completed: [] };
+}
+
+function saveProgress(progress) {
+  localStorage.setItem(progressKey, JSON.stringify(progress));
+}
+
+function markModeCompleted(modeKey) {
+  const progress = loadProgress();
+  if (!progress.completed.includes(modeKey)) {
+    progress.completed.push(modeKey);
+    saveProgress(progress);
+  }
+}
+
+function isModeUnlocked(modeKey, progress) {
+  const index = modeOrder.indexOf(modeKey);
+  if (index <= 0) return true;
+  return progress.completed.includes(modeOrder[index - 1]);
+}
+
+function isModeLockedComplete(modeKey, progress) {
+  // The challenge mode is replayable without limit, so it never locks on completion.
+  return modeKey !== 'challenge' && progress.completed.includes(modeKey);
+}
+
+function renderHome() {
+  const progress = loadProgress();
+  document.querySelectorAll('[data-start-mode]').forEach((button) => {
+    const modeKey = button.dataset.startMode;
+    const card = button.closest('.quick-mode-card');
+    const status = card.querySelector('.quick-mode-status');
+    const unlocked = isModeUnlocked(modeKey, progress);
+    const doneLocked = isModeLockedComplete(modeKey, progress);
+    card.classList.toggle('is-locked', !unlocked);
+    card.classList.toggle('is-completed', doneLocked);
+    button.disabled = !unlocked || doneLocked;
+    button.textContent = doneLocked ? 'შესრულებულია' : (unlocked ? 'დაწყება' : 'დაბლოკილია');
+    if (doneLocked) {
+      status.hidden = false;
+      status.textContent = 'შესრულებულია';
+      status.className = 'badge quick-mode-status quick-ok';
+    } else if (!unlocked) {
+      status.hidden = false;
+      status.textContent = 'დაბლოკილია';
+      status.className = 'badge quick-mode-status';
+    } else {
+      status.hidden = true;
+    }
+  });
+}
 
 function show(view) {
   ['#quick-home', '#quick-loading', '#quick-error', '#quick-runner', '#quick-result'].forEach((selector) => {
@@ -178,6 +240,8 @@ function ensureEnough(questions, modeKey) {
 async function start(modeKey, forceNew = true) {
   const mode = modes[modeKey];
   if (!mode) return;
+  const progress = loadProgress();
+  if (!isModeUnlocked(modeKey, progress) || isModeLockedComplete(modeKey, progress)) return;
   if (forceNew) clearSaved();
   show('#quick-loading');
   try {
@@ -335,6 +399,7 @@ function complete() {
   if (!state || state.completed) return;
   state.completed = true;
   clearInterval(timer);
+  markModeCompleted(state.mode);
   save();
   renderResult();
   clearSaved();
@@ -358,6 +423,9 @@ function renderResult() {
     ? state.questions.slice(0, state.answers.length)
     : state.questions;
   $('#quick-details').replaceChildren(...detailQuestions.map((question, index) => detailCard(question, index)));
+  const replayable = state.mode === 'challenge';
+  $('#quick-retry').hidden = !replayable;
+  $('#quick-new').hidden = !replayable;
   show('#quick-result');
 }
 
@@ -434,12 +502,14 @@ document.querySelectorAll('[data-start-mode]').forEach((button) => {
 $('#quick-error-back').addEventListener('click', () => {
   clearSaved();
   state = null;
+  renderHome();
   show('#quick-home');
 });
 $('#quick-back-home').addEventListener('click', () => {
   if (confirm('მიმდინარე ტესტი შეწყდეს?')) {
     clearSaved();
     state = null;
+    renderHome();
     show('#quick-home');
   }
 });
@@ -464,9 +534,13 @@ $('#quick-new').addEventListener('click', () => start(state.mode));
 $('#quick-home-button').addEventListener('click', () => {
   state = null;
   clearSaved();
+  renderHome();
   show('#quick-home');
 });
 
 requireTestAccess().then((allowed) => {
-  if (allowed && !restore()) show('#quick-home');
+  if (allowed && !restore()) {
+    renderHome();
+    show('#quick-home');
+  }
 });

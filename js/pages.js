@@ -1,4 +1,5 @@
 import { categories, laws as fallbackLaws, questions } from './data.js';
+import { session } from './supabase.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({
@@ -23,12 +24,29 @@ function card(c) {
   return `<article class="card"><div class="eyebrow">${esc(c.icon)} სამართალი</div><h3>${esc(c.title)}</h3><p class="meta">${esc(c.desc)}</p><div class="card-footer"><span>${c.count} კითხვა</span><a class="btn" href="quiz.html?category=${encodeURIComponent(c.id)}">დაწყება</a></div></article>`;
 }
 
+let isAdminUser = false;
+
+async function checkAdmin() {
+  try {
+    const client = await window.App.getClient();
+    if (!client) return false;
+    const { data: { session: authSession } } = await client.auth.getSession();
+    if (!authSession) return false;
+    const { data, error } = await client.from('profiles').select('role').eq('id', authSession.user.id).single();
+    if (error) return false;
+    return data?.role === 'admin';
+  } catch {
+    return false;
+  }
+}
+
 function lawTestCard(law) {
   const direction = law.direction_slug || law.direction || 'other';
   const count = law.question_count ?? law.count ?? 0;
   const title = law.title || law.short_title || law.short;
   const desc = law.description || law.desc || '';
-  return `<article class="card test-card"><div class="eyebrow">${esc(directionNames[direction] || 'სამართლის')} ტესტი</div><h3>${esc(title)}</h3><p class="meta">${esc(desc)}</p><div class="card-footer"><span class="question-total">${count} კითხვა</span><div class="test-actions"><a class="btn" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=learning">სასწავლო ტესტი</a><a class="btn secondary" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=exam">საგამოცდო ტესტი</a></div></div></article>`;
+  const countBadge = isAdminUser ? `<span class="question-total">${count} კითხვა</span>` : '';
+  return `<article class="card test-card"><div class="eyebrow">${esc(directionNames[direction] || 'სამართლის')} ტესტი</div><h3>${esc(title)}</h3><p class="meta">${esc(desc)}</p><div class="card-footer">${countBadge}<div class="test-actions"><a class="btn" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=learning">სასწავლო ტესტი</a><a class="btn secondary" href="quiz.html?law=${encodeURIComponent(law.slug)}&mode=exam">საგამოცდო ტესტი</a></div></div></article>`;
 }
 
 if ($('#categories')) $('#categories').remove();
@@ -280,6 +298,10 @@ if ($('#test-list')) {
   installCustomBuilderButton();
   render();
   loadLawTests();
+  checkAdmin().then((result) => {
+    isAdminUser = result;
+    render();
+  });
 }
 
 if ($('#leaderboard')) {
@@ -290,6 +312,27 @@ if ($('#leaderboard')) {
     ['თქვენ', '860', 'სტუდენტი'],
   ];
   $('#leaderboard').innerHTML = rows.map((r, i) => `<tr><td>${i + 1}</td><td>${r[0]}</td><td>${r[1]}</td><td><span class="badge">${r[2]}</span></td></tr>`).join('');
+}
+
+if ($('#progress-card')) {
+  session().then(async (activeSession) => {
+    if (!activeSession) return;
+    try {
+      const [usage, stats] = await Promise.all([
+        window.App.rpc('check_daily_usage'),
+        window.App.rpc('get_user_statistics'),
+      ]);
+      const used = Number(usage?.used ?? 0);
+      const limit = Number(usage?.limit ?? 0);
+      const attempts = Number(stats?.attempts ?? 0);
+      $('#stat-daily').textContent = `${used} / ${limit}`;
+      $('#stat-remaining-label').textContent = 'დარჩენილი დღიური კითხვა';
+      $('#stat-remaining').textContent = String(Math.max(0, limit - used));
+      $('#stat-completed').textContent = String(attempts);
+    } catch (error) {
+      console.warn('progress card update failed', error);
+    }
+  });
 }
 
 if ($('#certificate-form')) {
