@@ -3,4 +3,4 @@ Allow: /
 Disallow: /auth.html
 Disallow: /profile.html
 Disallow: /admin.html
-Sitemap: https://mishvelidzeu-code.github.io/iuristi-ge/sitemap.xml
+Sitemap: https://sagamocdo.ge/sitemap.xml

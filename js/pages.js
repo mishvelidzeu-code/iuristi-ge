@@ -277,7 +277,7 @@ if ($('#test-list')) {
       console.warn('test order db insert failed', error);
     }
 
-    const subject = 'ტესტის შეკვეთა - iuristi.ge';
+    const subject = 'ტესტის შეკვეთა - sagamocdo.ge';
     const body = [
       `სახელი: ${name || '-'}`,
       `საკონტაქტო: ${contact}`,
