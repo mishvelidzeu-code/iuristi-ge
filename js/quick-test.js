@@ -68,8 +68,8 @@ function renderHome() {
       status.className = 'badge quick-mode-status quick-ok';
     } else if (!unlocked) {
       status.hidden = false;
-      status.textContent = 'დაბლოკილია';
-      status.className = 'badge quick-mode-status';
+      status.textContent = 'დაბლოკილია — ჯერ გაიარეთ წინა ტესტი';
+      status.className = 'quick-mode-status quick-mode-locked-msg';
     } else {
       status.hidden = true;
     }
